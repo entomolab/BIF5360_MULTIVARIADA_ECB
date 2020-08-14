@@ -1,0 +1,358 @@
+---
+title: "02_Distribución_continua"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+knitr::opts_chunk$set(echo = FALSE)
+library(lubridate)
+library(vegan)
+library(ade4)
+library(fdth)
+library(MASS)
+library(PerformanceAnalytics)
+library(TeachingDemos)
+library(tidyverse)
+```
+
+# Introducción
+
+La distribución continua se reconoce por su forma de campana, y resulta ser la distribución continua más importante, ya que mide en forma aproximada muchos fenómenos que ocurren en la naturaleza (Daniel, 2006; Logan, 2010). La curva de distribución, se le llama campana de Gauss o gaussiana es asintótica, simétrica en ambos lados; además, tiene un cambio de cóncavo a convexo.
+
+La curva de distribución normal se puede generar en el entorno de R utilizando los siguientes códigos:
+
+```{r}
+x <-seq(-5,5,length=100)
+y <-dnorm(x)
+plot(x,y,type="l",lwd=2,col="red")
+```
+Figura. 1. Función de densidad normal. El eje x etiqueta la distancia de las desviaciones estándares (sd) respecto a la media (mu=0).
+
+la cual responde a la siguiente ecuación:
+
+$f(x)= \frac{1}{\sqrt{2\pi}} e^{^{x^{-2}/2}}$
+
+La función de distribución normal indica que en entre los límites de 1 desviación estándar positiva y 1 desviación estándar negativa, se localiza alrededor del 68% de las observaciones extraídas aleatoriamente de una población distribuída normalmente. El otro 32% estará fuera de estos valores (un 16% por encima de una desviación típica y el otro 16% por debajo). En otras palabras, la probabilidad de que una observación individual escogida al azar sea una descriptora de la población es de un 68% (Fowler, 1999).
+
+```{r ,eval=FALSE, echo=FALSE}
+x<-seq(-5,5,0.1)
+hist <- dnorm(x, mean=0, sd=1) 
+
+poly_range <- hist > -1 & dnorm(x)$x < -1   
+
+plot(x, hist, type="l", xlab="Desviación estándar", 
+     ylab="Densidad",
+     main="Plot de Densidad", 
+     lty = 1, lwd = 3, yaxs="i")
+
+text(0, .1,"68%")
+```
+
+```{r original, eval=FALSE, echo=FALSE}
+x<-seq(-5,5,0.1)
+hist <- dnorm(x, mean=0, sd=1) 
+
+plot(x, hist, type="l", xlab="Desviación estándar", ylab="Densidad",main="Plot de Densidad", lty = 1, lwd = 3, yaxs="i") # yaxs="i" localiza en el eje el límite del dato
+polygon(c(x[x <= 1.0], -1), 
+        c(dnorm(x[x <= 1]), 0), 
+        col="lightblue")
+
+text(0, .1,"0.977")
+```
+
+La distribución normal está determinada por dos constantes: $\mu = 0$ (media poblacional) y $\sigma = 1$ (desviación estándar poblacional).
+
+Otra forma de generar la curva de distribución normal en R sería:
+
+```{r}
+x<-seq(-3,3,length=100)
+y<-1/sqrt(2*pi)*exp(-x^2/2)
+plot(x,y,type="l", lwd=3, col="blue", main="Función de Densidad")
+```
+
+En términos generales, se pueden utilizar los siguientes comandos para lograr construir la distribución normal:
+
+- dnorm()
+- pnorm()
+- qnorm()
+- rnorm()
+
+Puede utilizar la ayuda de R para verificar las características de las funciones:
+
+```{r explorar_codigo, exercise=TRUE, exercise.lines = 5}
+?dnorm()
+```
+
+
+La función dnorm() nos brinda los valores de probabilidad de la función de densidad.
+
+La función pnorm() calcula la probabilidad acumulada, siendo esta el área bajo la curva hasta una ordenada (eje x) específica.
+
+```{r}
+pnorm(2, mean=0,sd=1)
+```
+
+Para entender mejor en la forma gráfica proyectamos esta probabilidad.
+
+```{r}
+x<-seq(-5,5,0.1)
+hist <- dnorm(x, mean=0, sd=1) 
+plot(x, hist, type="l", xlab="Desviación estándar", ylab="Densidad",main="Plot de Densidad", lty = 1, lwd = 3, yaxs="i") # yaxs="i" localiza en el eje el límite del dato
+polygon(c(x[x <= 2.0], 2), c(dnorm(x[x <= 2]), 0), col="lightblue")
+text(0, 0.1,"0.977")
+```
+
+El área bajo la curva de la campana de Gauss en color celeste claro representa, que el 97.7% de desviaciones estándares normales son menores a 2 (100%). Bajo el supuesto que el área bajo la curva es 100% de una función de densidad.
+
+La función qnorm(), determina el cuantil de una probabilidad dada.
+
+```{r}
+qnorm(0.9772499,mean=0, sd=1)
+```
+
+El dato representa los valores menores asociados al percentil 97 de la distribución, con una media de cero y desviación estándar de uno.
+
+La función rnorm() genera números aleatorios con distribución normal.
+
+```{r}
+set.seed(12345) #vector integral que establece parámetros iguales para todas las computadoras.
+rnorm(100,mean=0, sd=1)
+```
+
+La distribución normal es frecuentemente utilizada para describir la diferencia entre valores observados y valores predichos de un modelo ajustado.
+
+Para entender bien el concepto de áreas baja la curva daremos algunos ejemplos que pueden resolverse con simples funciones de R, siguiendo las reglas básicas de probabilidad.
+
+## Ejemplos Probabilidad Normal
+
+Ejemplo 6.1. Determine la probabilidad de z (de la curva normal) con valores que están entre -1.73 y 2.60?
+
+```{r}
+pnorm(2.60)-pnorm(-1.73)
+```
+
+R/ el área bajo la curva normal estándar es de 0.95
+
+
+Ejemplo 6.2. Dada la curva normal estándar, calcular Pr(z mayor igual que 2.65).
+
+```{r}
+1-pnorm(2.65)
+```
+
+## Casos para la curva normal estándar
+
+
+1) Caso 1
+
+```{r}
+## [1] 0.411492
+```
+
+
+2) Caso 2
+
+```{r}
+## [1] 0.9544997
+```
+
+
+3) Caso 3
+
+```{r}
+## [1] 0.8413447
+```
+PONER FIGURA CASO 3
+
+4) Caso 4
+
+```{r}
+## [1] 0.9772499
+```
+
+PONER FIGURA CASO 4
+
+5) Caso 5
+
+```{r}
+## [1] 0.1359051
+```
+PONER FIGURA CASO 5
+
+6) Caso 6
+
+```{r}
+## [1] 0.1359051
+```
+
+## Aplicación de problemas con la curva normal estándar.
+
+Los parámetros de estimación de la distribución normal son la media y desviación típica . Cualquier observación de x sobre la línea base de la curva normal se puede estandarizar como el número de unidades de desviaciones típicas. La forma de responder a cuestiones de probabilidad acerca de variables continuas aleatorias esta dado por:
+
+$z=\frac{x-\mu}{\sigma}$
+
+A menudo sucede que desconocemos los valores de la media. y de desviación típica. Es por lo que utilizamos los estadísticos de una muestra dados por el promedio y la desviación estándar (s) y se consideran buenos estimadores de la media y la varianza
+
+$z=\frac{\overline{x} - \mu}{\sigma}$
+
+Estandarizando una observación $\overline{x}$ a su valor z, podemos relacionarlo con las propiedades de las curvas normales.
+
+```{r}
+require(TeachingDemos) # Carga la extensión
+```
+Ejemplo 6.3.
+
+Un estudio acerca de la estructura de árboles, determino que la población de la especie de Cecropias en la zona del Caribe tienen una media en DAP cercana a los 63 cm con una desviación estándar de 4.4 cm. Se quisiera determinar otras mediaciones en una zona próxima y suponiendo que los datos pertenecen a una población grande con una distribución aproximadamente normal.
+
+a) Es posible encontrar arboles con DAP igual a 60 cm que pertenezcan a esa misma población?
+
+#### Solución.
+
+```{r}
+z.test(x=60,mu=63,sd=4.4, alternative = "two.sided")
+```
+
+o
+
+```{r}
+pnorm(60,63,4.4)*2
+```
+
+<span style="color:red">Nota:</span> Entender que la pregunta es en masa y la función dnorm no calcula en masa, calcula la densidad, es por ello por lo que para convertir la respuesta a una función en masa la multiplicamos por dos, de esta manera tendremos la solución. Esto opción solo aplica cuando la pregunta es menor a la media, en este caso la pregunta era a 60 y nuestra media es mayor “63”
+
+<span style="color:red">Nota 2:</span> Cuando la pregunta en masa, tiene un valor que supera la media se debe aplicar <span style="color:blue"> (1-pnorm(x))*2</span>. Ejemplo:
+
+b) Es posible encontrar arboles con DAP igual a 67 cm que pertenezcan a esa misma población?
+
+```{r}
+(1-pnorm(67,63,4.4))*2
+```
+
+Mismo resultado que obtenemos con z.test
+
+```{r}
+z.test(67,63,4.4)
+```
+
+Observe que esta aplicación “TeachingDeamos” nos brinda el resultado de z = -0.6818, y la probabilidad de que el evento ocurra: p-value = 0.4954. Así mismo nos calcula el intervalo de confianza = [51.37 a 68.62].
+
+La función “pnorm” únicamente nos permite calcular la probabilidad. Esta es reducida en cuanto a la información brindada, no permite calcular un nivel de significación diferente al 95% como si lo hace “z.test”, pero es suficiente para responder lo que nos interesa.
+
+Las áreas de rechazo al 95% de confianza en la curva normal estándar están determinadas por 1.96 desviaciones estándar a cada lado 
+
+
+
+Figura. 5. Curva normal estándar, al 95 % de confianza mostrando sus áreas de aceptación de la
+
+Como observa el valor de z (-0.68) cae dentro del área de aceptación de más menos 1.96 desviaciones estándar.
+
+R/ Se puede determinar que arboles con DAP igual a 60 cm pertenecen a esa población con una confiabilidad del 95%.
+
+Con base al área de rechazo de z=-0.68, podríamos concluir, además, si se nos hubiese planteado la hipótesis que:
+
+H0= DAP =60 H1= DAP dif 60.
+
+Si se planteara la pregunta:
+
+b) Determine la probabilidad de encontrar arboles con DAP mayores a 70 cm, dentro de la población
+
+H0= DAP menor o igual 70
+H1= DAP > 70
+
+Note que ahora estamos interesados en conocer la probabilidad de un evento dado.
+
+Solución:
+
+```{r}
+z.test(70,63,4.4,alternative="greater") 
+```
+
+o
+
+```{r}
+1-pnorm(70,63,4.4)
+```
+
+Calculando el valor de z
+
+```{r}
+qnorm(0.05581502, lower.tail = FALSE)
+```
+
+Note que la función “qnorm” nos permite calcular el valor de z estandarizado de los datos. Esto únicamente funciona para funciones acumuladas. Siempre debe utilizar lower.tail = FALSE, para que dé el verdadero valor de z, sino el valor podría tener un símbolo diferente.
+
+Compare sus resultados utilizando “TeachingDemos” y “pnorm”. Deben de coincidir.
+
+Nota: Verifique también el uso de la tabla de normal estándar para contrastar su respuesta.
+
+También podemos hacer uso directo definiendo la hipótesis alternativa en el comando de z.test.
+
+R/ la probabilidad de encontrar arboles con DAP mayores a 70 es de un 5%.
+
+c) Probabilidad de encontrar arboles mayores a 55 cm.
+
+```{r}
+z.test(55,63,4.4, alternative="g")
+```
+##### o
+
+```{r}
+1-pnorm(-1.8182)
+```
+R/ la probabilidad de encontrar arboles mayores a 55 cm es de un 96%.
+
+Ejemplo 6.4.
+
+Se realiza un estudio para conocer los ámbitos de acción de especies de perezosos durante un periodo de un mes, se seleccionan de manera aleatoria de la población 35 individuos. Los datos fueron registrados en hectáreas por mes.
+
+```{r}
+ra<-c(8.08,6.33,7.88,10.98,7.81,6.49,9.67,9.17,9.06,9.77,8.89,6.06,7.86,6.86,11.79,4.88,10.42,4.98,6.25,7.04,7.76,5.33,4.98,7,8.74,7.14,6.73,7.79,9.48,8.86,6.29,9.73,9,5.39,7.56)
+ra
+```
+
+a) Cual es la probabilidad de encontrar un individuo dentro de la población cuyo ámbito de acción sea igual a 7.5?
+
+```{r}
+mean(ra)
+```
+
+```{r}
+sd(ra)
+```
+
+Solución:
+
+```{r}
+z.test(7.5,7.7,1.77, conf.level=.95)
+```
+
+o
+
+```{r}
+pnorm (7.5,mean(ra),sd(ra))*2
+```
+
+```{r}
+#este resultante es más preciso, porque utiliza todos los decimales, mientras que en el z.test, simplificamos la media y desviación estándar a uno o dos decimales. Ahí está la diferencia.
+```
+
+R/ Tengo una probabilidad del 87.75% de encontrar un individuo cuyo radio de acción sea de 7.5 ha al 95% de confianza.
+
+b. Cuál es la probabilidad de encontrar individuos cuyo ámbito de acción este entre 5.8 y 7.8 hectáreas al 95% de confianza?
+
+c. Pr(x>7)?
+
+d. Pr(x menor o igual a 5.8)?
+
+e. Pr(x mayor o igual a 6.5)?
+
+
+
+Material elaborado por: Oscar Ramírez Alan (QDGG)
+
+Modificado por: Meyer Guevara Mora
+
+Versión: `r now()`
+
